@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flood Data Subscriber</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://npmcdn.com/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+</head>
+<body>
+<!-- 前端请求后端定时任务示例 -->
+
+
+<div id="status">Not Connected</div>
+
+<script type="text/javascript">
+  var stompClient = null;
+
+  function connect() {
+    var socket = new SockJS('http://localhost:8080/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, onConnected, onError);
+  }
+
+  function onConnected() {
+    document.getElementById('status').innerHTML = 'Connected';
+    // 自动订阅 sId=1 的数据
+    subscribeToTopic(1); // 注意这里传入了 sId 参数
+  }
+
+  function setConnected(connected) {
+    var status = connected ? 'Connected' : 'Not Connected';
+    document.getElementById('status').innerHTML = status;
+  }
+
+  function onMessage(message) {
+    console.log('Received data:', message.body);
+  }
+
+  function onError(error) {
+    console.error('Error connecting to server:', error);
+    setConnected(false);
+  }
+
+  function disconnect() {
+    if (stompClient !== null) {
+      stompClient.disconnect();
+      stompClient.send("/app/unsubscribe-flood-data", {}, "");
+    }
+    setConnected(false);
+    console.log('Disconnected');
+  }
+
+  function subscribeToTopic(sId) {
+    // 直接使用传入的 sId 参数
+    stompClient.send("/app/subscribe-flood-data", {}, JSON.stringify({ 'sId' : parseInt(sId) }));
+    stompClient.subscribe('/topic/flood-data', onMessage);
+  }
+
+  $(function () {
+    connect();
+    window.onbeforeunload = function () {
+      disconnect();
+    };
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>GIS Data App</title>
+    <script>
+        window.onload = function() {
+            fetch('/api/flood-data/001/1')
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        populateTable(data);
+                    } else {
+                        console.error('Expected an array but received:', data);
+                    }
+                })
+                .catch(error => console.error('Error fetching flood data:', error));
+
+            function populateTable(floodData) {
+                const tableBody = document.querySelector('tbody');
+                tableBody.innerHTML = ''; // 清空tbody以防重复添加数据
+                floodData.forEach(item => {
+                    const row = tableBody.insertRow();
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    // const cell3 = row.insertCell(2); // 新增一列显示海拔
+
+                    cell1.textContent = item.totalWate || 'N/A'; // totalWate字段数据
+                    if (item.coordinates && Array.isArray(item.coordinates) && item.coordinates.length > 0) { // 使用coordinates代替geomYcl
+                        let geomYclStr = '';
+                        item.coordinates.forEach(coords => {
+                            geomYclStr += `(${coords[0]}, ${coords[1]}, ${coords[2]}) `;
+                        });
+                        cell2.textContent = geomYclStr.trim(); // 显示坐标串
+                        // cell3.textContent = item.coordinates[0][2]; // 显示第一个海拔值作为示例
+                    } else {
+                        cell2.textContent = 'N/A';
+                        // cell3.textContent = 'N/A';
+                    }
+                });
+            }
+        };
+    </script>
+</head>
+<body>
+<h1>Flood Data</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>Total Wate</th>
+        <th>Geom YcL</th>
+<!--        <th>Altitude</th> &lt;!&ndash; 新增海拔列 &ndash;&gt;-->
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</body>
+</html>
